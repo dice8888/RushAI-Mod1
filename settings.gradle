@@ -1,0 +1,21 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'MinecraftForge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+        // ✅ Vosk 라이브러리를 위한 저장소 추가
+        maven {
+            name = "AlphaCephei"
+            url = "https://alphacephei.com/maven/"
+        }
+    }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
+}
+
+rootProject.name = "RushAI" // 기존 코드 (프로젝트 이름 설정)
+include 'libs' // ✅ `libs/` 폴더 인식 추가
