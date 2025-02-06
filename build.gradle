@@ -1,0 +1,142 @@
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+version = "1.0.0"
+group = "com.rush_ai"
+
+base {
+    archivesName = "rush_ai"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+
+minecraft {
+    mappings channel: "official", version: "1.20.1"
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                "rush_ai" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', "rush_ai"
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', "rush_ai"
+            args '--nogui'
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', "rush_ai"
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+            args '--mod', "rush_ai", '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    mavenCentral()
+    mavenLocal() // ✅ Maven 로컬 저장소 추가 (Vosk 직접 설치한 경우 필요)
+    maven {
+        name = "MinecraftForge"
+        url = "https://maven.minecraftforge.net/"
+    }
+    maven {
+        name = "AlphaCephei"
+        url = "https://alphacephei.com/maven/"
+    }
+    maven {
+        name = "JitPack"
+        url = "https://jitpack.io"
+    }
+}
+
+dependencies {
+    // Minecraft Forge 의존성 추가
+    minecraft "net.minecraftforge:forge:1.20.1-47.3.27"
+
+    // `libs/` 폴더 내 JAR 파일 인식
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    runtimeOnly files('libs/vosk-0.3.45.jar') //
+
+    // Vosk API 로드
+    implementation 'org.vosk:vosk:0.3.45'
+    implementation 'net.java.dev.jna:jna:5.13.0'
+    implementation 'net.java.dev.jna:jna-platform:5.13.0'
+
+
+
+}
+
+
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [
+            minecraft_version: "1.20.1", minecraft_version_range: "[1.20.1]",
+            forge_version: "47.3.27", forge_version_range: "[47.3.27]",
+            loader_version_range: "[6.0,6.2)",
+            mod_id: "rush_ai", mod_name: "Rush AI", mod_license: "MIT", mod_version: "1.0.0",
+            mod_authors: "YourName", mod_description: "AI가 플레이어의 말을 이해하고 행동하는 모드",
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : "rush_ai",
+                'Specification-Vendor'    : "YourName",
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : "YourName",
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+
+    finalizedBy 'reobfJar'
+}
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifact jar
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    from {
+        sourceSets.main.resources
+    }
+}

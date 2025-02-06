@@ -1,0 +1,10 @@
+modLoader="javafml"
+loaderVersion="[43,)"
+license="MIT"
+
+[[mods]]
+modId="rush_ai"
+version="1.0"
+displayName="Rush AI Mod"
+authors="YourName"
+description="An AI companion mod featuring Rush."
